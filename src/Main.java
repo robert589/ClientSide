@@ -24,8 +24,9 @@ public class Main {
     static    ClientResponse responseClient = new ClientResponse();
 
 
-
     public static void main(String[] args) throws Exception {
+        boolean at_most_invocation = true;
+
         Scanner sc = new Scanner(System.in);
 
         System.out.println("Welcome to the client side");
@@ -42,12 +43,26 @@ public class Main {
 
         while(true) {
             try {
+                if(at_most_invocation){
+                    System.out.println("Invocation: AT MOST ONCE INVOCATION");
+                }
+                else{
+                    System.out.println("Invocation: AT LEAST ONCE INVOCATION");
+                }
                 System.out.println("What do you want to do?");
                 System.out.println("1. Read the content of the file.");
                 System.out.println("2. Insert content into a file.");
                 System.out.println("3. Monitor the client. ");
-                System.out.println("4. At least once invocation file.");
-                System.out.println("5. At most once invocation file.");
+                System.out.println("4. Simulate duplicate request.");
+
+                if(at_most_invocation){
+                    System.out.println("5. Change to at least invocation.");
+
+                }
+                else{
+                    System.out.println("5. Change to at most invocation.");
+                }
+
                 System.out.println("0. Exit");
                 System.out.print("Input the choice:");
                 int choice = sc.nextInt();
@@ -56,24 +71,27 @@ public class Main {
                         break;
                 }
 
+                String filePath;
+                int offset;
+                int numOfBytes;
 
                 switch (choice) {
                     case MessageType.READ_COMMAND:
                         System.out.print("Please input the file path:");
                         sc = new Scanner(System.in);
-                        String filePath = sc.nextLine();
+                        filePath = sc.nextLine();
 
                         System.out.print("Please input the offset:");
                         sc = new Scanner(System.in);
-                        int offset = sc.nextInt();
+                        offset = sc.nextInt();
 
 
                         System.out.print("Please input the number of bytes:");
                         sc = new Scanner(System.in);
-                        int numOfBytes = sc.nextInt();
+                        numOfBytes = sc.nextInt();
 
                          result = controller.readFileContent(filePath, offset, numOfBytes);
-                        System.out.print(result);
+                        System.out.println(result);
                         break;
 
                     case MessageType.INSERT_COMMAND:
@@ -90,7 +108,7 @@ public class Main {
                         sc = new Scanner(System.in);
                         String bytesToWrite = sc.nextLine();
 
-                         result = controller.writeFileContent(filePath, offset, bytesToWrite.getBytes());
+                         result = controller.writeFileContent(filePath, offset, bytesToWrite.getBytes(), at_most_invocation);
                         System.out.println(result);
                         break;
 
@@ -106,11 +124,32 @@ public class Main {
                         controller.monitorFile(filePath, intervalMilli);
                         break;
 
-                    case MessageType.FAIL_AT_LEAST_ONCE:
+                    case MessageType.DUPLICATE_REQUEST:
+                        System.out.println("Duplicate request for writing, it will submit request twice without increasing request number");
 
+                        System.out.print("Please input the file path:");
+                        sc = new Scanner(System.in);
+                        filePath = sc.nextLine();
+
+                        System.out.print("Please input the offset:");
+                        sc = new Scanner(System.in);
+                        offset = sc.nextInt();
+
+
+                        System.out.print("Please input the bytes to write into the file:");
+                        sc = new Scanner(System.in);
+                        bytesToWrite = sc.nextLine();
+
+                        controller.writeDuplicateFileContent(filePath, offset, bytesToWrite.getBytes(),at_most_invocation);
                         break;
 
-                    case MessageType.FAIL_AT_MOST_ONCE:
+                    case MessageType.CHANGE_INVOCATION:
+                        if(at_most_invocation){
+                            at_most_invocation = false;
+                        }
+                        else{
+                            at_most_invocation = true;
+                        }
                         break;
 
                 }

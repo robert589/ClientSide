@@ -86,14 +86,48 @@ public class CommandController {
     }
 
 
-    public String writeFileContent(String filePath, int offset, byte[] bytesToWrite) throws Exception {
+    public String writeFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws Exception {
         this.operation = MessageType.INSERT_COMMAND;
 
         socket = new DatagramSocket();
 
-        //send(new Marshaller((byte) MessageType.INSERT_FILE, "test", 1, "b".getBytes(), sequenceNum).getBytes());
-        send(new Marshaller((byte) MessageType.INSERT_FILE, filePath, offset, bytesToWrite, sequenceNum++).getBytes());
-        // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
+        if(at_most_once){
+
+            //send(new Marshaller((byte) MessageType.INSERT_FILE, "test", 1, "b".getBytes(), sequenceNum).getBytes());
+            send(new Marshaller((byte) MessageType.INSERT_FILE, filePath, offset, bytesToWrite, sequenceNum++).getBytes());
+        }
+        else{
+            send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
+        }
+
+        ServerResponse response = waitingForResponse();
+        return response.getTemplate();
+    }
+
+    /**
+     * User this one will not increase the sequest number, the server will notice this as duplicate
+     * @param filePath
+     * @param offset
+     * @param bytesToWrite
+     * @return
+     * @throws Exception
+     */
+    public String writeDuplicateFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws  Exception{
+        this.operation = MessageType.INSERT_COMMAND;
+
+        socket = new DatagramSocket();
+
+        if(at_most_once){
+            //send(new Marshaller((byte) MessageType.INSERT_FILE, "test", 1, "b".getBytes(), sequenceNum).getBytes());
+            send(new Marshaller((byte) MessageType.INSERT_FILE, filePath, offset, bytesToWrite, sequenceNum).getBytes());
+            send(new Marshaller((byte) MessageType.INSERT_FILE, filePath, offset, bytesToWrite, sequenceNum).getBytes());
+
+        }
+        else{
+            send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
+
+            send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
+        }
 
         ServerResponse response = waitingForResponse();
         return response.getTemplate();
@@ -147,8 +181,8 @@ public class CommandController {
                     response = (String) um.getNext();
                     seq_num = Integer.toString(((byte[]) um.getNext()).length);
                     template = "Bytes received - length: " + response + " seq num = " + um.getNext();
-
                     return new ServerResponse(response, seq_num, template, MessageType.CALLBACK);
+
                 case MessageType.ERROR:
                     response = (String) um.getNext();
                     seq_num = (String) um.getNext();
@@ -164,7 +198,7 @@ public class CommandController {
                     return new ServerResponse(path,seq_num, template, MessageType.RESPONSE_PATH);
                 case MessageType.RESPONSE_SUCCESS:
                     response = (String) um.getNext();
-                    seq_num = (String) um.getNext();
+                    seq_num = Integer.toString((int)um.getNext());
                     template = response + " seq num = " + seq_num;
                     return new ServerResponse(response, seq_num,template, MessageType.RESPONSE_SUCCESS);
                 default:
