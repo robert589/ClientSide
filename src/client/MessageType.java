@@ -17,4 +17,10 @@ public class MessageType
     public static final int RESPONSE_PATH = 8;
     public static final int RESPONSE_SUCCESS = 9;
     public static final int AT_LEAST_ONCE_DEMO_INSERT_FILE = 51;
+
+    //Command
+    public static final int READ_COMMAND = 1;
+    public  static final int INSERT_COMMAND = 2;
+    public static final int MONITOR_COMMAND = 3;
+
 }
