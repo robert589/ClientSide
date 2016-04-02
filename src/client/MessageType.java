@@ -22,5 +22,8 @@ public class MessageType
     public static final int READ_COMMAND = 1;
     public  static final int INSERT_COMMAND = 2;
     public static final int MONITOR_COMMAND = 3;
+    public static final int FAIL_AT_LEAST_ONCE = 4;
+    public static final int FAIL_AT_MOST_ONCE = 5;
+
 
 }

@@ -36,6 +36,8 @@ public class Main {
         System.out.print("Specify server IP: ");
         String address = sc.next();
 
+        String result;
+
         CommandController controller = new CommandController(port, InetAddress.getByName(address));
 
         while(true) {
@@ -44,7 +46,8 @@ public class Main {
                 System.out.println("1. Read the content of the file.");
                 System.out.println("2. Insert content into a file.");
                 System.out.println("3. Monitor the client. ");
-                System.out.println("4. Simulate loss transmission.");
+                System.out.println("4. At least once invocation file.");
+                System.out.println("5. At most once invocation file.");
                 System.out.println("0. Exit");
                 System.out.print("Input the choice:");
                 int choice = sc.nextInt();
@@ -69,7 +72,8 @@ public class Main {
                         sc = new Scanner(System.in);
                         int numOfBytes = sc.nextInt();
 
-                        controller.readFileContent(filePath, offset, numOfBytes);
+                         result = controller.readFileContent(filePath, offset, numOfBytes);
+                        System.out.print(result);
                         break;
 
                     case MessageType.INSERT_COMMAND:
@@ -86,7 +90,8 @@ public class Main {
                         sc = new Scanner(System.in);
                         String bytesToWrite = sc.nextLine();
 
-                        controller.writeFileContent(filePath, offset, bytesToWrite.getBytes());
+                         result = controller.writeFileContent(filePath, offset, bytesToWrite.getBytes());
+                        System.out.println(result);
                         break;
 
                     case MessageType.MONITOR_COMMAND:
@@ -101,17 +106,12 @@ public class Main {
                         controller.monitorFile(filePath, intervalMilli);
                         break;
 
-                }
-                while (true) {
+                    case MessageType.FAIL_AT_LEAST_ONCE:
 
-                    byte[] recvBuf = new byte[FileServerThread.MAX_PACKET_BYTES];
-                    DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
-
-                    String response = controller.receive(packet);
-                    if(response != null){
-                        System.out.println(response);
                         break;
-                    }
+
+                    case MessageType.FAIL_AT_MOST_ONCE:
+                        break;
 
                 }
 

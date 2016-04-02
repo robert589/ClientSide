@@ -1,3 +1,9 @@
+package entity;
+/**
+ * Created by user on 2/4/2016.
+ */
+
+
 import client.AddressPort;
 import client.ErrorCodes;
 import client.MessageType;
@@ -16,20 +22,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 
-
-public class FileServer
-{
-    public FileServer() throws IOException
-    {
-        new FileServerThread().start();
-    }
-}
-
-
 /**
  *
  */
-class FileServerThread extends Thread
+public class FileServerThread extends Thread
 {
     public static final int MAX_PACKET_BYTES = 60000;
     public static final int DEBUG_MASK = 4;
@@ -511,3 +507,4 @@ class FileServerThread extends Thread
             System.out.println(logStr + content);
     }
 }
+

@@ -10,11 +10,17 @@ public class Cache {
 
     private Timestamp last_validated;
 
-    private byte content;
+    private int offset;
 
-    public Cache(String filePath, byte content){
+    private int numOfBytes;
+
+    private byte[] content;
+
+    public Cache(String filePath, byte[] content, int offset, int numOfBytes){
         this.filePath = filePath;
         this.content = content;
+        this.offset= offset;
+        this.numOfBytes = numOfBytes;
     }
 
     public String getFilePath() {
@@ -33,11 +39,27 @@ public class Cache {
         this.last_validated = last_validated;
     }
 
-    public byte getContent() {
+    public byte[] getContent() {
         return content;
     }
 
-    public void setContent(byte content) {
+    public void setContent(byte[] content) {
         this.content = content;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
+    public int getNumOfBytes() {
+        return numOfBytes;
+    }
+
+    public void setNumOfBytes(int numOfBytes) {
+        this.numOfBytes = numOfBytes;
     }
 }
