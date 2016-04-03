@@ -66,8 +66,22 @@ public class CommandController {
 
     }
 
+    public void monitorResponse(int intervalInMillis){
+        System.out.println("Waiting for "  + intervalInMillis);
+        long startTime = System.currentTimeMillis(); //fetch starting time
+        while((System.currentTimeMillis()-startTime)<10000)
+        {
+            byte[] recvBuf = new byte[FileServerThread.MAX_PACKET_BYTES];
+            DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 
-    public String readFileContent(String filePath, int offset, int numOfBytes) throws Exception {
+            ServerResponse response = receive(packet);
+            System.out.println(response.getTemplate());
+            // do something
+        }
+    }
+
+
+    public void readFileContent(String filePath, int offset, int numOfBytes) throws Exception {
         //set the operation to be read
         this.operation = MessageType.READ_COMMAND;
 
@@ -76,20 +90,20 @@ public class CommandController {
         byte[] readFromCache = cacheController.readFile(filePath, offset, numOfBytes);
 
         if(readFromCache != null){
-            return "Read from cache" + new String(readFromCache);
+            System.out.println("Read from cache" + new String(readFromCache));
         }
         else{
             // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
             send(new Marshaller((byte) MessageType.READ_FILE, filePath, offset, numOfBytes, sequenceNum++).getBytes());
             ServerResponse response =  waitingForResponse();
             cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
-            return response.getTemplate();
+            System.out.println(response.getTemplate());
             // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
         }
     }
 
 
-    public String writeFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws Exception {
+    public void writeFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws Exception {
         this.operation = MessageType.INSERT_COMMAND;
 
         socket = new DatagramSocket();
@@ -104,7 +118,7 @@ public class CommandController {
         }
 
         ServerResponse response = waitingForResponse();
-        return response.getTemplate();
+        System.out.println(response.getTemplate());
     }
 
     /**
@@ -115,7 +129,7 @@ public class CommandController {
      * @return
      * @throws Exception
      */
-    public String writeDuplicateFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws  Exception{
+    public void writeDuplicateFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws  Exception{
         this.operation = MessageType.INSERT_COMMAND;
 
         socket = new DatagramSocket();
@@ -132,10 +146,10 @@ public class CommandController {
         }
 
         ServerResponse response = waitingForResponse();
-        return response.getTemplate();
+        System.out.println(response.getTemplate());
     }
 
-    public String monitorFile(String filePath, int intervalMilliSeconds) throws Exception {
+    public void monitorFile(String filePath, int intervalMilliSeconds) throws Exception {
         this.operation = MessageType.MONITOR_COMMAND;
 
         socket = new DatagramSocket();
@@ -143,8 +157,7 @@ public class CommandController {
         //send(new Marshaller((byte) MessageType.INSERT_FILE, "test", 1, "b".getBytes(), sequenceNum).getBytes());
         send(new Marshaller((byte) MessageType.MONITOR_FILE, filePath, intervalMilliSeconds, sequenceNum++).getBytes());
         // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
-        ServerResponse response = waitingForResponse();
-        return response.getTemplate();
+     monitorResponse(intervalMilliSeconds);
     }
 
 

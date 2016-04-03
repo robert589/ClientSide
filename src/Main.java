@@ -90,8 +90,7 @@ public class Main {
                         sc = new Scanner(System.in);
                         numOfBytes = sc.nextInt();
 
-                         result = controller.readFileContent(filePath, offset, numOfBytes);
-                        System.out.println(result);
+                         controller.readFileContent(filePath, offset, numOfBytes);
                         break;
 
                     case MessageType.INSERT_COMMAND:
@@ -108,8 +107,7 @@ public class Main {
                         sc = new Scanner(System.in);
                         String bytesToWrite = sc.nextLine();
 
-                         result = controller.writeFileContent(filePath, offset, bytesToWrite.getBytes(), at_most_invocation);
-                        System.out.println(result);
+                         controller.writeFileContent(filePath, offset, bytesToWrite.getBytes(), at_most_invocation);
                         break;
 
                     case MessageType.MONITOR_COMMAND:
@@ -121,8 +119,7 @@ public class Main {
                         sc = new Scanner(System.in);
                         int intervalMilli = sc.nextInt();
 
-                        String monitor = controller.monitorFile(filePath, intervalMilli);
-                        System.out.println(monitor);
+                        controller.monitorFile(filePath, intervalMilli);
                         break;
 
                     case MessageType.DUPLICATE_REQUEST:
