@@ -27,6 +27,8 @@ public class CommandController {
 
     private CacheController cacheController = new CacheController();
 
+    private boolean halted = false;
+
     public CommandController(int port, InetAddress address) {
         this.port = port;
         this.address = address;
@@ -52,6 +54,7 @@ public class CommandController {
 
     public ServerResponse waitingForResponse(){
         while (true) {
+            System.out.println("Waiting for response");
             byte[] recvBuf = new byte[FileServerThread.MAX_PACKET_BYTES];
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 
@@ -125,7 +128,6 @@ public class CommandController {
         }
         else{
             send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
-
             send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
         }
 
@@ -133,7 +135,7 @@ public class CommandController {
         return response.getTemplate();
     }
 
-    public void monitorFile(String filePath, int intervalMilliSeconds) throws Exception {
+    public String monitorFile(String filePath, int intervalMilliSeconds) throws Exception {
         this.operation = MessageType.MONITOR_COMMAND;
 
         socket = new DatagramSocket();
@@ -141,7 +143,11 @@ public class CommandController {
         //send(new Marshaller((byte) MessageType.INSERT_FILE, "test", 1, "b".getBytes(), sequenceNum).getBytes());
         send(new Marshaller((byte) MessageType.MONITOR_FILE, filePath, intervalMilliSeconds, sequenceNum++).getBytes());
         // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
+        ServerResponse response = waitingForResponse();
+        return response.getTemplate();
     }
+
+
 
 
     private void send(byte[] buf) throws IOException {

@@ -117,11 +117,12 @@ public class Main {
                         sc = new Scanner(System.in);
                         filePath = sc.nextLine();
 
-                        System.out.print("Please input the offset:");
+                        System.out.print("Please input the millisecond:");
                         sc = new Scanner(System.in);
                         int intervalMilli = sc.nextInt();
 
-                        controller.monitorFile(filePath, intervalMilli);
+                        String monitor = controller.monitorFile(filePath, intervalMilli);
+                        System.out.println(monitor);
                         break;
 
                     case MessageType.DUPLICATE_REQUEST:
