@@ -23,7 +23,9 @@ public class MessageType
     public  static final int INSERT_COMMAND = 2;
     public static final int MONITOR_COMMAND = 3;
     public static final int DUPLICATE_REQUEST = 4;
-    public static final int CHANGE_INVOCATION = 5;
+    public static final int DUPLICATE_REQUEST_FOR_NON_INDEMPOTENT= 5;
+
+    public static final int CHANGE_INVOCATION = 6;
 
 
 }

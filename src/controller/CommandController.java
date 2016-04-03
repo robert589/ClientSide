@@ -10,6 +10,8 @@ import java.io.StringReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.Arrays;
+
 import entity.FileServerThread;
 /**
  * Created by user on 1/4/2016.
@@ -90,14 +92,20 @@ public class CommandController {
         byte[] readFromCache = cacheController.readFile(filePath, offset, numOfBytes);
 
         if(readFromCache != null){
-            System.out.println("Read from cache" + new String(readFromCache));
+            if(Arrays.equals(readFromCache, CacheController.DATA_IS_OUTDATED)){
+
+            }
+            else{
+                System.out.println("Read from cache" + new String(readFromCache));
+            }
         }
         else{
             // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
             send(new Marshaller((byte) MessageType.READ_FILE, filePath, offset, numOfBytes, sequenceNum++).getBytes());
             ServerResponse response =  waitingForResponse();
-            cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
             System.out.println(response.getTemplate());
+            cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
+
             // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
         }
     }
@@ -160,12 +168,21 @@ public class CommandController {
      monitorResponse(intervalMilliSeconds);
     }
 
+    public void deleteFileDuplicateRequest(String filePath) throws  Exception{
+        socket = new DatagramSocket();
 
+        send(new Marshaller((byte) MessageType.DELETE_FILE, "test", sequenceNum).getBytes());
+        send(new Marshaller((byte) MessageType.DELETE_FILE, "test", sequenceNum).getBytes());
+
+        ServerResponse response = waitingForResponse();
+        System.out.println(response.getTemplate());
+    }
 
 
     private void send(byte[] buf) throws IOException {
         DatagramPacket packet = new DatagramPacket(buf, buf.length,
                 this.address, this.port);
+        System.out.println("Sending command to server.....");
         socket.send(packet);
     }
 
@@ -199,7 +216,7 @@ public class CommandController {
                 case MessageType.CALLBACK:
                     response = (String) um.getNext();
                     seq_num = Integer.toString(((byte[]) um.getNext()).length);
-                    template = "Bytes received - length: " + response + " seq num = " + um.getNext();
+                    template = "Successfully read it from server: " + response + ",seq num = " + um.getNext();
                     return new ServerResponse(response, seq_num, template, MessageType.CALLBACK);
 
                 case MessageType.ERROR:

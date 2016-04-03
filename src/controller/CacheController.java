@@ -11,6 +11,11 @@ import java.util.Arrays;
 public class CacheController {
     private ArrayList<Cache> cacheList = new ArrayList<Cache>();
 
+    public final static long INTERVAL_FRESHNESS_TIME = 30000;
+
+    //Super random bytes
+    public final static byte[] DATA_IS_OUTDATED = new byte[]    {(byte)178,(byte)179,(byte)188,(byte)198,(byte)208,(byte)178};
+
     public CacheController(){
 
     }
@@ -18,6 +23,7 @@ public class CacheController {
     private Cache checkExist(String filePath){
         for(Cache cache: cacheList){
             if(cache.getFilePath().equals( filePath)){
+                System.out.println("Cache named " + cache.getFilePath() + " is found");
                 return cache;
             }
         }
@@ -30,14 +36,21 @@ public class CacheController {
         Cache cache = this.checkExist(filePath);
         if(cache != null){
             if(cache.getOffset() <= offset && ( cache.getNumOfBytes() == -1 ||  cache.getNumOfBytes() > numOfBytes )){
-                if(cache.getNumOfBytes() == -1){
-                    return Arrays.copyOfRange(cache.getContent(),offset - cache.getOffset(), cache.getContent().length);
-
+                //CHECK WHETHER THE TIME FRESHNESS HAS PASSED
+                if((System.currentTimeMillis() - cache.getLast_validated()) < INTERVAL_FRESHNESS_TIME){
+                    if(cache.getNumOfBytes() == -1){
+                        return Arrays.copyOfRange(cache.getContent(),offset - cache.getOffset(), cache.getContent().length);
+                    }
+                    else{
+                        return Arrays.copyOfRange(cache.getContent(),offset - cache.getOffset(), numOfBytes);
+                    }
                 }
                 else{
-                    return Arrays.copyOfRange(cache.getContent(),offset - cache.getOffset(), numOfBytes);
-
+                    System.out.println("The cache is outdated, sending command to server");
+                    return DATA_IS_OUTDATED;
                 }
+
+
             }
             else{
                 System.out.println("Offset or num of bytes not enough");

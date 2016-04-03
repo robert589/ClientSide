@@ -43,25 +43,30 @@ public class Main {
 
         while(true) {
             try {
+                System.out.println(    "-------------------------------------------");
+                System.out.println(    "                 MAIN PANEL                ");
+                System.out.println(    "-------------------------------------------");
                 if(at_most_invocation){
                     System.out.println("Invocation: AT MOST ONCE INVOCATION");
                 }
                 else{
-                    System.out.println("Invocation: AT LEAST ONCE INVOCATION");
+                    System.out.println("Invo    cation: AT LEAST ONCE INVOCATION");
                 }
                 System.out.println("What do you want to do?");
                 System.out.println("1. Read the content of the file.");
                 System.out.println("2. Insert content into a file.");
                 System.out.println("3. Monitor the client. ");
-                System.out.println("4. Simulate duplicate request.");
+                System.out.println("4. Simulate duplicate request for idempotent operation.");
+                System.out.println("5. Simulate duplicate request for non-idempotent operation.");
 
                 if(at_most_invocation){
-                    System.out.println("5. Change to at least invocation.");
+                    System.out.println("6. Change to at least invocation.");
 
                 }
                 else{
-                    System.out.println("5. Change to at most invocation.");
+                    System.out.println("6. Change to at most invocation.");
                 }
+                System.out.println("7. Simulate loss transmission");
 
                 System.out.println("0. Exit");
                 System.out.print("Input the choice:");
@@ -123,6 +128,21 @@ public class Main {
                         break;
 
                     case MessageType.DUPLICATE_REQUEST:
+                        System.out.println("This is idempotent operation");
+                        System.out.println("Duplicate request for delete file, it will submit request twice without increasing request number");
+
+                        System.out.print("Please input the file path:");
+                        sc = new Scanner(System.in);
+                        filePath = sc.nextLine();
+
+                        controller.deleteFileDuplicateRequest(filePath);
+
+
+                        break;
+
+                    case MessageType.DUPLICATE_REQUEST_FOR_NON_INDEMPOTENT:
+                        System.out.println("This is non idempotent operation");
+
                         System.out.println("Duplicate request for writing, it will submit request twice without increasing request number");
 
                         System.out.print("Please input the file path:");
@@ -140,7 +160,6 @@ public class Main {
 
                         controller.writeDuplicateFileContent(filePath, offset, bytesToWrite.getBytes(),at_most_invocation);
                         break;
-
                     case MessageType.CHANGE_INVOCATION:
                         if(at_most_invocation){
                             at_most_invocation = false;

@@ -8,7 +8,7 @@ import java.security.Timestamp;
 public class Cache {
     private String filePath;
 
-    private Timestamp last_validated;
+    private long last_validated;
 
     private int offset;
 
@@ -21,6 +21,8 @@ public class Cache {
         this.content = content;
         this.offset= offset;
         this.numOfBytes = numOfBytes;
+        this.last_validated = System.currentTimeMillis();
+        System.out.println("Successfuly stored the cache named "  + this.filePath + " at: " + this.last_validated);
     }
 
     public String getFilePath() {
@@ -31,11 +33,11 @@ public class Cache {
         this.filePath = filePath;
     }
 
-    public Timestamp getLast_validated() {
+    public long getLast_validated() {
         return last_validated;
     }
 
-    public void setLast_validated(Timestamp last_validated) {
+    public void setLast_validated(long last_validated) {
         this.last_validated = last_validated;
     }
 
