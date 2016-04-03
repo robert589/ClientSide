@@ -11,6 +11,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Date;
 
 import entity.FileServerThread;
 /**
@@ -93,7 +94,23 @@ public class CommandController {
 
         if(readFromCache != null){
             if(Arrays.equals(readFromCache, CacheController.DATA_IS_OUTDATED)){
+                send(new Marshaller((byte) MessageType.GET_ATTRIBUTES, filePath, sequenceNum++).getBytes());
+                ServerResponse response = waitingForResponse();
+                Long timeServer = Long.parseLong(response.getStatus());
 
+                readFromCache = cacheController.getContent(filePath, timeServer);
+                if(readFromCache == null){
+                    System.out.println("The server has new updated file");
+                    // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
+                    send(new Marshaller((byte) MessageType.READ_FILE, filePath, offset, numOfBytes, sequenceNum++).getBytes());
+                    response =  waitingForResponse();
+                    System.out.println(response.getTemplate());
+                    cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
+                }
+                else{
+                    System.out.println("The client file is up to date in the server");
+                    System.out.println("Read from cache" + new String(readFromCache));
+                }
             }
             else{
                 System.out.println("Read from cache" + new String(readFromCache));
@@ -149,8 +166,8 @@ public class CommandController {
 
         }
         else{
-            send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
-            send(new Marshaller((byte) MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE, filePath, offset, bytesToWrite, -1).getBytes());
+            send(new Marshaller((byte) MessageType.useAtLeastOnce(MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE), filePath, offset, bytesToWrite, -1).getBytes());
+            send(new Marshaller((byte) MessageType.useAtLeastOnce(MessageType.AT_LEAST_ONCE_DEMO_INSERT_FILE), filePath, offset, bytesToWrite, -1).getBytes());
         }
 
         ServerResponse response = waitingForResponse();
@@ -168,11 +185,17 @@ public class CommandController {
      monitorResponse(intervalMilliSeconds);
     }
 
-    public void deleteFileDuplicateRequest(String filePath) throws  Exception{
+    public void deleteFileDuplicateRequest(String filePath, boolean at_most_once) throws  Exception{
         socket = new DatagramSocket();
 
-        send(new Marshaller((byte) MessageType.DELETE_FILE, "test", sequenceNum).getBytes());
-        send(new Marshaller((byte) MessageType.DELETE_FILE, "test", sequenceNum).getBytes());
+        if(at_most_once){
+            send(new Marshaller((byte) MessageType.DELETE_FILE, filePath, sequenceNum).getBytes());
+            send(new Marshaller((byte) MessageType.DELETE_FILE, filePath, sequenceNum).getBytes());
+        }
+        else{
+            send(new Marshaller((byte)MessageType.useAtLeastOnce( MessageType.DELETE_FILE), filePath, sequenceNum).getBytes());
+            send(new Marshaller((byte) MessageType.useAtLeastOnce( MessageType.DELETE_FILE), filePath, sequenceNum).getBytes());
+        }
 
         ServerResponse response = waitingForResponse();
         System.out.println(response.getTemplate());
@@ -220,7 +243,7 @@ public class CommandController {
                     return new ServerResponse(response, seq_num, template, MessageType.CALLBACK);
 
                 case MessageType.ERROR:
-                    response = (String) um.getNext();
+                    response = String.valueOf( um.getNext());
                     seq_num = (String) um.getNext();
                     template = "Error occured - code " + response + ": " + seq_num;
                     return new ServerResponse(response, seq_num,template, MessageType.ERROR);
@@ -232,11 +255,18 @@ public class CommandController {
                     seq_num = (String)um.getNext();
                     template = "Duplicated file path recvd: " + path + " seq num = " + seq_num;
                     return new ServerResponse(path,seq_num, template, MessageType.RESPONSE_PATH);
+
                 case MessageType.RESPONSE_SUCCESS:
                     response = (String) um.getNext();
                     seq_num = Integer.toString((int)um.getNext());
                     template = response + " seq num = " + seq_num;
                     return new ServerResponse(response, seq_num,template, MessageType.RESPONSE_SUCCESS);
+
+                case MessageType.RESPONSE_ATTRIBUTES:
+                    response = (String) um.getNext();
+                    template = "From Server: Last modification at: " + response ;
+                    return new ServerResponse(response,template, MessageType.RESPONSE_ATTRIBUTES);
+
                 default:
                     response = (String) um.getNext();
                     template = "Strange request received" + response;

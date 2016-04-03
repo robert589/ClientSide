@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class CacheController {
     private ArrayList<Cache> cacheList = new ArrayList<Cache>();
 
-    public final static long INTERVAL_FRESHNESS_TIME = 30000;
+    public final static long INTERVAL_FRESHNESS_TIME = 5000;
 
     //Super random bytes
     public final static byte[] DATA_IS_OUTDATED = new byte[]    {(byte)178,(byte)179,(byte)188,(byte)198,(byte)208,(byte)178};
@@ -30,7 +30,6 @@ public class CacheController {
 
         return null;
     }
-
 
     byte[] readFile(String filePath, int offset, int numOfBytes){
         Cache cache = this.checkExist(filePath);
@@ -71,6 +70,16 @@ public class CacheController {
 
     }
 
+    public byte[] getContent(String filePath, long timeServer){
+        Cache cache = this.checkExist(filePath);
+        System.out.println(cache.getLast_validated() + " " + (timeServer));
+        if(cache.getLast_validated() < (timeServer )){
+            return null;
+        }
+        else{
+            return this.checkExist(filePath).getContent();
+        }
+    }
 
 
 }

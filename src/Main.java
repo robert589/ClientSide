@@ -135,7 +135,7 @@ public class Main {
                         sc = new Scanner(System.in);
                         filePath = sc.nextLine();
 
-                        controller.deleteFileDuplicateRequest(filePath);
+                        controller.deleteFileDuplicateRequest(filePath, at_most_invocation);
 
 
                         break;

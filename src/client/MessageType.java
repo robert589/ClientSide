@@ -16,6 +16,8 @@ public class MessageType
     public static final int CALLBACK = 7;
     public static final int RESPONSE_PATH = 8;
     public static final int RESPONSE_SUCCESS = 9;
+    public static final int GET_ATTRIBUTES = 10;
+    public static final int RESPONSE_ATTRIBUTES = 11;
     public static final int AT_LEAST_ONCE_DEMO_INSERT_FILE = 51;
 
     //Command
@@ -26,6 +28,13 @@ public class MessageType
     public static final int DUPLICATE_REQUEST_FOR_NON_INDEMPOTENT= 5;
 
     public static final int CHANGE_INVOCATION = 6;
+
+
+    public static int useAtLeastOnce(int messageType)
+    {
+        return messageType + 50;
+    }
+
 
 
 }
