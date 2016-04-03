@@ -10,7 +10,7 @@ import java.net.InetAddress;
 import java.util.Scanner;
 
 /**
- * Created by user on 24/3/2016.
+ * Created by Robert Limanto on 24/3/2016.
  */
 public class Main {
     byte[] sendBuf = new byte[256];

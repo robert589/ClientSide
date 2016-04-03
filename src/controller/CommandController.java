@@ -6,33 +6,46 @@ import marshalling.Marshaller;
 import marshalling.UnMarshaller;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
-import java.util.Date;
 
 import entity.FileServerThread;
 /**
+ * This controller is the primary controller that sends and receives command from the server
  * Created by user on 1/4/2016.
  */
 public class CommandController {
+    /**
+     * Port of the server
+     */
     private int port;
 
+    /**
+     * Address of the server
+     */
     private InetAddress address;
 
+    /**
+     * socket to send and receive data
+     */
     private static DatagramSocket socket = null;
 
+    /**
+     * sequence number of the client side
+     */
     private int sequenceNum = 0;
 
-    private int operation;
-
+    /**
+     * Control the cache list
+     */
     private CacheController cacheController = new CacheController();
 
-    private boolean halted = false;
-
+    /**
+     * if it does not get response in the socket after this period of time, it will timeout and halt the request
+     */
     private final int TIMEOUT = 10000;
 
     public CommandController(int port, InetAddress address) {
@@ -58,7 +71,11 @@ public class CommandController {
 
     }
 
-    public ServerResponse waitingForResponse(){
+    /**
+     * Waiting for response after sending data, if it is timeout, it will return null
+     * @return ServerResponse
+     */
+    private ServerResponse waitingForResponse(){
         long startTime = System.currentTimeMillis();
 
         while ((System.currentTimeMillis() - startTime) < TIMEOUT) {
@@ -77,7 +94,11 @@ public class CommandController {
         return null;
     }
 
-    public void monitorResponse(int intervalInMillis){
+    /**
+     * Monitor whether there is a message from the server
+     * @param intervalInMillis
+     */
+    private void monitorResponse(int intervalInMillis){
         System.out.println("Waiting for "  + intervalInMillis);
         long startTime = System.currentTimeMillis(); //fetch starting time
         while((System.currentTimeMillis()-startTime)<10000)
@@ -94,7 +115,6 @@ public class CommandController {
 
     public void readFileContent(String filePath, int offset, int numOfBytes) throws Exception {
         //set the operation to be read
-        this.operation = MessageType.READ_COMMAND;
 
         socket = new DatagramSocket();
 
@@ -106,7 +126,7 @@ public class CommandController {
                 ServerResponse response = waitingForResponse();
                 Long timeServer = Long.parseLong(response.getStatus());
 
-                readFromCache = cacheController.getContent(filePath, timeServer);
+                readFromCache = cacheController.CheckUptodate(filePath, timeServer);
                 if(readFromCache == null){
                     System.out.println("The server has new updated file");
                     // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
@@ -140,7 +160,6 @@ public class CommandController {
 
 
     public void writeFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws Exception {
-        this.operation = MessageType.INSERT_COMMAND;
 
         socket = new DatagramSocket();
 
@@ -166,7 +185,6 @@ public class CommandController {
      * @throws Exception
      */
     public void writeDuplicateFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws  Exception{
-        this.operation = MessageType.INSERT_COMMAND;
 
         socket = new DatagramSocket();
 
@@ -186,7 +204,6 @@ public class CommandController {
     }
 
     public void monitorFile(String filePath, int intervalMilliSeconds) throws Exception {
-        this.operation = MessageType.MONITOR_COMMAND;
 
         socket = new DatagramSocket();
 
@@ -195,6 +212,7 @@ public class CommandController {
         // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
      monitorResponse(intervalMilliSeconds);
     }
+
 
     public void deleteFileDuplicateRequest(String filePath, boolean at_most_once) throws  Exception{
         socket = new DatagramSocket();
