@@ -168,6 +168,22 @@ public class Main {
                             at_most_invocation = true;
                         }
                         break;
+                    case MessageType.SIMULATE_TIMEOUT:
+                        System.out.println("Timeout when read file, we will purposely send it to different port");
+                        System.out.print("Please input the file path:");
+                        sc = new Scanner(System.in);
+                        filePath = sc.nextLine();
+
+                        System.out.print("Please input the offset:");
+                        sc = new Scanner(System.in);
+                        offset = sc.nextInt();
+
+
+                        System.out.print("Please input the number of bytes:");
+                        sc = new Scanner(System.in);
+                        numOfBytes = sc.nextInt();
+
+                        break;
 
                 }
 

@@ -10,6 +10,7 @@ import java.io.StringReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -31,6 +32,8 @@ public class CommandController {
     private CacheController cacheController = new CacheController();
 
     private boolean halted = false;
+
+    private final int TIMEOUT = 10000;
 
     public CommandController(int port, InetAddress address) {
         this.port = port;
@@ -56,17 +59,22 @@ public class CommandController {
     }
 
     public ServerResponse waitingForResponse(){
-        while (true) {
+        long startTime = System.currentTimeMillis();
+
+        while ((System.currentTimeMillis() - startTime) < TIMEOUT) {
+
             System.out.println("Waiting for response");
             byte[] recvBuf = new byte[FileServerThread.MAX_PACKET_BYTES];
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 
             ServerResponse response = receive(packet);
+            System.out.println(response);
             if(response != null){
                 return response;
             }
-        }
 
+        }
+        return null;
     }
 
     public void monitorResponse(int intervalInMillis){
@@ -120,9 +128,12 @@ public class CommandController {
             // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
             send(new Marshaller((byte) MessageType.READ_FILE, filePath, offset, numOfBytes, sequenceNum++).getBytes());
             ServerResponse response =  waitingForResponse();
-            System.out.println(response.getTemplate());
-            cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
+            if(response != null){
 
+                System.out.println(response.getTemplate());
+                cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
+
+            }
             // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
         }
     }
@@ -201,7 +212,6 @@ public class CommandController {
         System.out.println(response.getTemplate());
     }
 
-
     private void send(byte[] buf) throws IOException {
         DatagramPacket packet = new DatagramPacket(buf, buf.length,
                 this.address, this.port);
@@ -211,14 +221,13 @@ public class CommandController {
 
     private ServerResponse receive(DatagramPacket packet) {
         try {
+            socket.setSoTimeout(TIMEOUT);
             socket.receive(packet);
-
             UnMarshaller um = new UnMarshaller(packet.getData());
             int resType = (byte) um.getNextByte();
             String response;
             String seq_num;
             String template;
-
             // Handles responses
             switch (resType) {
                 case MessageType.RESPONSE_MSG:
@@ -267,16 +276,14 @@ public class CommandController {
                     template = "From Server: Last modification at: " + response ;
                     return new ServerResponse(response,template, MessageType.RESPONSE_ATTRIBUTES);
 
-                default:
-                    response = (String) um.getNext();
-                    template = "Strange request received" + response;
-                    return new ServerResponse(response, template, -100);
             }
+        }
+        catch (SocketTimeoutException e){
+            System.out.println("Timeout");
         }
         catch(Exception e){
             e.printStackTrace();
         }
-
         return null;
 
     }
