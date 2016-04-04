@@ -112,21 +112,33 @@ public class CommandController {
         }
     }
 
-
+    /**
+     * First the function will read the cache, if it does not exist, it will return null,
+     * if it exists, but it is outdated, it will check with server whether the file is uptodate
+     * if it is uptodate, read from the cache
+     * it is is not up-to-date, update the cache with the new fresh data from the server
+     * else read the cache
+     * @param filePath
+     * @param offset
+     * @param numOfBytes
+     * @throws Exception
+     */
     public void readFileContent(String filePath, int offset, int numOfBytes) throws Exception {
         //set the operation to be read
 
         socket = new DatagramSocket();
 
         byte[] readFromCache = cacheController.readFile(filePath, offset, numOfBytes);
-
+        //if cache exist
         if(readFromCache != null){
+            //if cache is outdated
             if(Arrays.equals(readFromCache, CacheController.DATA_IS_OUTDATED)){
                 send(new Marshaller((byte) MessageType.GET_ATTRIBUTES, filePath, sequenceNum++).getBytes());
                 ServerResponse response = waitingForResponse();
                 Long timeServer = Long.parseLong(response.getStatus());
 
                 readFromCache = cacheController.CheckUptodate(filePath, timeServer);
+                //cache is not up to date with the server
                 if(readFromCache == null){
                     System.out.println("The server has new updated file");
                     // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
@@ -135,6 +147,7 @@ public class CommandController {
                     System.out.println(response.getTemplate());
                     cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
                 }
+                //cache is uptodate
                 else{
                     System.out.println("The client file is up to date in the server");
                     System.out.println("Read from cache" + new String(readFromCache));
@@ -144,6 +157,7 @@ public class CommandController {
                 System.out.println("Read from cache" + new String(readFromCache));
             }
         }
+        //empty cache
         else{
             // Parameters for READ_FILE - PathName, Offset, Length (set this to -1 if you want to read to end), SequenceNumber
             send(new Marshaller((byte) MessageType.READ_FILE, filePath, offset, numOfBytes, sequenceNum++).getBytes());
@@ -158,7 +172,14 @@ public class CommandController {
         }
     }
 
-
+    /**
+     * Insert content to file , it can be at least once or at most once mode
+     * @param filePath
+     * @param offset
+     * @param bytesToWrite
+     * @param at_most_once
+     * @throws Exception
+     */
     public void writeFileContent(String filePath, int offset, byte[] bytesToWrite, boolean at_most_once) throws Exception {
 
         socket = new DatagramSocket();
@@ -203,6 +224,12 @@ public class CommandController {
         System.out.println(response.getTemplate());
     }
 
+    /**
+     * Monitor file for specific amount of time
+     * @param filePath
+     * @param intervalMilliSeconds
+     * @throws Exception
+     */
     public void monitorFile(String filePath, int intervalMilliSeconds) throws Exception {
 
         socket = new DatagramSocket();
@@ -214,6 +241,12 @@ public class CommandController {
     }
 
 
+    /**
+     * This function is to test idempotent operation
+     * @param filePath
+     * @param at_most_once
+     * @throws Exception
+     */
     public void deleteFileDuplicateRequest(String filePath, boolean at_most_once) throws  Exception{
         socket = new DatagramSocket();
 
@@ -230,6 +263,11 @@ public class CommandController {
         System.out.println(response.getTemplate());
     }
 
+    /**
+     * This function is used to send command to the server
+     * @param buf
+     * @throws IOException
+     */
     private void send(byte[] buf) throws IOException {
         DatagramPacket packet = new DatagramPacket(buf, buf.length,
                 this.address, this.port);
@@ -237,6 +275,11 @@ public class CommandController {
         socket.send(packet);
     }
 
+    /**
+     * Use for receiving data/command from the server
+     * @param packet
+     * @return
+     */
     private ServerResponse receive(DatagramPacket packet) {
         try {
             socket.setSoTimeout(TIMEOUT);

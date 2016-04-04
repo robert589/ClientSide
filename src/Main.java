@@ -13,17 +13,11 @@ import java.util.Scanner;
  * Created by Robert Limanto on 24/3/2016.
  */
 public class Main {
-    byte[] sendBuf = new byte[256];
-
-
     /**
-     * Current Command or operation
+     * UI and start application, starts here
+     * @param args
+     * @throws Exception
      */
-    //private int operation;
-
-    static    ClientResponse responseClient = new ClientResponse();
-
-
     public static void main(String[] args) throws Exception {
         boolean at_most_invocation = true;
 
@@ -81,6 +75,7 @@ public class Main {
                 int numOfBytes;
 
                 switch (choice) {
+                    //console interface
                     case MessageType.READ_COMMAND:
                         System.out.print("Please input the file path:");
                         sc = new Scanner(System.in);
