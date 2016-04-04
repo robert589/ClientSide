@@ -165,8 +165,9 @@ public class CommandController {
             if(response != null){
 
                 System.out.println(response.getTemplate());
-                cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
-
+                if(response.getMessage_type() == MessageType.RESPONSE_BYTES) {
+                    cacheController.addNew(filePath, offset, numOfBytes, response.getStatus().getBytes());
+                }
             }
             // Parameters for MONITOR_FILE - PathName, IntervalMilliseconds, SequenceNumber
         }
