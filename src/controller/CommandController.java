@@ -84,7 +84,7 @@ public class CommandController {
             byte[] recvBuf = new byte[FileServerThread.MAX_PACKET_BYTES];
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 
-            ServerResponse response = receive(packet);
+            ServerResponse response = receive(packet, false);
             System.out.println(response);
             if(response != null){
                 return response;
@@ -101,12 +101,12 @@ public class CommandController {
     private void monitorResponse(int intervalInMillis){
         System.out.println("Waiting for "  + intervalInMillis);
         long startTime = System.currentTimeMillis(); //fetch starting time
-        while((System.currentTimeMillis()-startTime)<10000)
+        while((System.currentTimeMillis()-startTime)<intervalInMillis)
         {
             byte[] recvBuf = new byte[FileServerThread.MAX_PACKET_BYTES];
             DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
 
-            ServerResponse response = receive(packet);
+            ServerResponse response = receive(packet, false);
             System.out.println(response.getTemplate());
             // do something
         }
@@ -281,43 +281,46 @@ public class CommandController {
      * @param packet
      * @return
      */
-    private ServerResponse receive(DatagramPacket packet) {
+    private ServerResponse receive(DatagramPacket packet, boolean needTimeout) {
         try {
-            socket.setSoTimeout(TIMEOUT);
+            if(needTimeout){
+                socket.setSoTimeout(TIMEOUT);
+
+            }
             socket.receive(packet);
             UnMarshaller um = new UnMarshaller(packet.getData());
             int resType = (byte) um.getNextByte();
-            String response;
+            String fileName;
             String seq_num;
             String template;
             // Handles responses
             switch (resType) {
                 case MessageType.RESPONSE_MSG:
-                    response = (String)um.getNext();
+                    fileName = (String)um.getNext();
                     seq_num = (String) um.getNext();
-                    template = "Response Received: " + response + " seq num = " + seq_num;
+                    template = "Response Received: " + fileName + " seq num = " + seq_num;
                     // Only normal responses have the sequence numbers embedded
 
-                    return new ServerResponse(response, seq_num, template, MessageType.RESPONSE_MSG);
+                    return new ServerResponse(fileName, seq_num, template, MessageType.RESPONSE_MSG);
                 case MessageType.RESPONSE_BYTES:
 
-                    response = new String((byte[]) um.getNext());
+                    fileName = new String((byte[]) um.getNext());
                     seq_num = Integer.toString((int)(um.getNext()));
-                    template = "Bytes received - length: " + response + " seq num = " + um.getNext();
+                    template = "Bytes received - length: " + fileName + " seq num = " + um.getNext();
                     // Only normal responses have the sequence numbers embedded
-                    return new ServerResponse(response, seq_num, template, MessageType.RESPONSE_BYTES);
+                    return new ServerResponse(fileName, seq_num, template, MessageType.RESPONSE_BYTES);
 
                 case MessageType.CALLBACK:
-                    response = (String) um.getNext();
-                    seq_num = Integer.toString(((byte[]) um.getNext()).length);
-                    template = "Successfully read it from server: " + response + ",seq num = " + um.getNext();
-                    return new ServerResponse(response, seq_num, template, MessageType.CALLBACK);
+                    fileName = (String) um.getNext();
+                    byte[] bytes = (byte[]) um.getNext();
+                    template = "Someone changes the file for file: " + fileName + ",bytes: " + new String(bytes);
+                    return new ServerResponse(fileName, "-1", template, MessageType.CALLBACK);
 
                 case MessageType.ERROR:
-                    response = String.valueOf( um.getNext());
-                    seq_num = (String) um.getNext();
-                    template = "Error occured - code " + response + ": " + seq_num;
-                    return new ServerResponse(response, seq_num,template, MessageType.ERROR);
+                    int errorCode = (int) um.getNext();
+                    String msg = String.valueOf( um.getNext());
+                    template = "Error occured - code " + errorCode + ": " + msg;
+                    return new ServerResponse(msg, "-1" ,template, MessageType.ERROR);
 
                 case MessageType.RESPONSE_PATH:
                     // Only normal responses have the sequence numbers embedded
@@ -328,15 +331,15 @@ public class CommandController {
                     return new ServerResponse(path,seq_num, template, MessageType.RESPONSE_PATH);
 
                 case MessageType.RESPONSE_SUCCESS:
-                    response = (String) um.getNext();
+                    fileName = (String) um.getNext();
                     seq_num = Integer.toString((int)um.getNext());
-                    template = response + " seq num = " + seq_num;
-                    return new ServerResponse(response, seq_num,template, MessageType.RESPONSE_SUCCESS);
+                    template = fileName + " seq num = " + seq_num;
+                    return new ServerResponse(fileName, seq_num,template, MessageType.RESPONSE_SUCCESS);
 
                 case MessageType.RESPONSE_ATTRIBUTES:
-                    response = (String) um.getNext();
-                    template = "From Server: Last modification at: " + response ;
-                    return new ServerResponse(response,template, MessageType.RESPONSE_ATTRIBUTES);
+                    fileName = (String) um.getNext();
+                    template = "From Server: Last modification at: " + fileName ;
+                    return new ServerResponse(fileName,template, MessageType.RESPONSE_ATTRIBUTES);
 
             }
         }

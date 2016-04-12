@@ -27,8 +27,6 @@ public class MessageType
     public static final int DUPLICATE_REQUEST = 4;
     public static final int DUPLICATE_REQUEST_FOR_NON_INDEMPOTENT= 5;
     public static final int CHANGE_INVOCATION = 6;
-    public static final int SIMULATE_TIMEOUT  = 7;
-
     public static int useAtLeastOnce(int messageType)
     {
         return messageType + 50;

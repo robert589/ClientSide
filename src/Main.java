@@ -23,6 +23,8 @@ public class Main {
 
         Scanner sc = new Scanner(System.in);
 
+
+
         System.out.println("Welcome to the client side");
 
         System.out.print("Specify server port: ");
@@ -60,7 +62,6 @@ public class Main {
                 else{
                     System.out.println("6. Change to at most invocation.");
                 }
-                System.out.println("7. Simulate loss transmission");
 
                 System.out.println("0. Exit");
                 System.out.print("Input the choice:");
